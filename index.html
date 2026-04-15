@@ -507,6 +507,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
     <span>Agregar</span>
   </button>
+  <button class="nav-btn" onclick="navTo('pg-proyeccion',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+    <span>Proyección</span>
+  </button>
   <button class="nav-btn" onclick="navTo('pg-analisis',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     <span>Análisis</span>
@@ -646,6 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderResumen();
   renderGastos();
   renderSueldos();
+  renderProyeccion();
   renderAnalisis();
 });
 
@@ -809,6 +814,133 @@ function renderSueldos() {
         <div class="list-sub" style="font-size:.62rem">Bruto: ${fmt(s.bruto)}</div>
       </div>
     </div>`).join('');
+}
+
+// ──────────────────────────────────────────────────────────
+// PROYECCIÓN ANUAL
+// ──────────────────────────────────────────────────────────
+let escenarioActivo = 'conservador';
+
+const VENTAS_REALES = {
+  Enero: 15149382, Febrero: 18738305, Marzo: 17864063, Abril: 3596835
+};
+
+const promedioReal = (VENTAS_REALES.Enero + VENTAS_REALES.Febrero + VENTAS_REALES.Marzo) / 3;
+
+const BASES = {
+  conservador: promedioReal * 0.85,
+  base:        promedioReal,
+  optimista:   promedioReal * 1.15,
+};
+
+const ESC_DESC = {
+  conservador: 'Proyecta los meses restantes con el 85% del promedio real Ene–Mar, creciendo 5% mensual.',
+  base:        'Proyecta los meses restantes con el promedio exacto de Ene–Mar, creciendo 5% mensual.',
+  optimista:   'Proyecta los meses restantes con el 115% del promedio real, creciendo 5% mensual.',
+};
+
+function calcProyeccion(escenario) {
+  const base = BASES[escenario];
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return meses.map((mes, i) => {
+    const esReal = i < 3;
+    let ventas;
+    if (esReal) {
+      ventas = VENTAS_REALES[mes];
+    } else {
+      const mesesDesdeBase = i - 2;
+      ventas = base * Math.pow(1.05, mesesDesdeBase);
+    }
+    const costoMP = ventas * 0.38;
+    const gastosFijos = 9844159;
+    const resultado = ventas - costoMP - gastosFijos;
+    return { mes, ventas, costoMP, gastosFijos, resultado, esReal };
+  });
+}
+
+function setEscenario(e) {
+  escenarioActivo = e;
+  ['conservador','base','optimista'].forEach(x => {
+    const el = document.getElementById('esc-'+x);
+    if(el) el.classList.toggle('active', x===e);
+  });
+  const descEl = document.getElementById('esc-descripcion');
+  if(descEl) descEl.textContent = ESC_DESC[e];
+  renderProyeccion();
+}
+
+function renderProyeccion() {
+  const datos = calcProyeccion(escenarioActivo);
+  const totalVentas = datos.reduce((a,d)=>a+d.ventas, 0);
+  const totalCostos = datos.reduce((a,d)=>a+d.costoMP+d.gastosFijos, 0);
+  const totalResult = datos.reduce((a,d)=>a+d.resultado, 0);
+  const metaAnual   = 23000000 * 12;
+  const pctMeta     = Math.round(totalVentas / metaAnual * 100);
+
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  set('proy-ventas-año',    fmt(totalVentas));
+  set('proy-ventas-sub',    'Promedio: '+fmt(totalVentas/12)+'/mes');
+  set('proy-costos-año',    fmt(totalCostos));
+  set('proy-resultado-año', fmt(totalResult));
+  set('proy-resultado-sub', totalResult>=0 ? '✅ Utilidad anual' : '❌ Pérdida anual');
+  set('proy-meta-año',      fmt(metaAnual));
+  set('proy-meta-pct',      pctMeta+'% del objetivo');
+
+  const stripe = document.getElementById('proy-res-stripe');
+  if(stripe) stripe.style.background = totalResult>=0 ? 'var(--verde)' : 'var(--rojo)';
+
+  // Gráfico
+  const maxV = Math.max(...datos.map(d=>d.ventas));
+  const chart = document.getElementById('proy-bar-chart');
+  if(chart) chart.innerHTML = datos.map(d => `
+    <div class="bar-wrap" style="flex:1">
+      <div class="bar" style="height:${maxV?(d.ventas/maxV*100):0}%;background:${d.esReal?'var(--naranja)':'var(--border)'};${!d.esReal?'border:1.5px dashed var(--text3)':''}"></div>
+      <span class="bar-lbl">${d.mes.slice(0,3)}</span>
+    </div>`).join('');
+
+  // Tabla mensual
+  const tabla = document.getElementById('proy-tabla');
+  if(tabla) tabla.innerHTML = datos.map(d => `
+    <div class="list-item">
+      <div class="list-main">
+        <div class="list-name" style="display:flex;align-items:center;gap:6px">
+          ${d.mes}
+          <span class="list-tag ${d.esReal?'tag-v':'tag-p'}" style="font-size:.58rem">${d.esReal?'Real':'Proy. +5%'}</span>
+        </div>
+        <div class="list-sub">Costos: ${fmt(d.costoMP+d.gastosFijos)}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amt" style="color:var(--verde)">${fmt(d.ventas)}</div>
+        <div class="list-sub" style="color:${d.resultado>=0?'var(--verde)':'var(--rojo)'};font-weight:600">
+          ${d.resultado>=0?'+':''}${fmt(d.resultado)}
+        </div>
+      </div>
+    </div>`).join('') +
+    `<div class="divider"></div>
+    <div class="list-item">
+      <div class="list-main"><div class="list-name" style="font-weight:700">TOTAL AÑO</div></div>
+      <div class="list-right">
+        <div class="list-amt" style="color:var(--verde);font-size:1rem">${fmt(totalVentas)}</div>
+        <div class="list-sub" style="color:${totalResult>=0?'var(--verde)':'var(--rojo)'};font-weight:700">
+          ${totalResult>=0?'+':''}${fmt(totalResult)}
+        </div>
+      </div>
+    </div>`;
+}
+
+function simular() {
+  const meta = parseFloat(document.getElementById('sim-meta').value)||0;
+  if(!meta){ document.getElementById('sim-resultado').style.display='none'; return; }
+  document.getElementById('sim-resultado').style.display='block';
+  const mensual = meta/12;
+  const clientes = Math.ceil(mensual/646148);
+  const pctVsReal = ((mensual/promedioReal-1)*100).toFixed(1);
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('sim-mensual',  fmt(mensual));
+  set('sim-clientes', clientes+' clientes');
+  set('sim-vs', (pctVsReal>0?'+':'')+pctVsReal+'% vs promedio real');
+  const vsEl = document.getElementById('sim-vs');
+  if(vsEl) vsEl.style.color = pctVsReal>=0?'var(--verde)':'var(--rojo)';
 }
 
 // ──────────────────────────────────────────────────────────
