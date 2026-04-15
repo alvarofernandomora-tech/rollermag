@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RollerMag · Gestión</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --naranja: #F4A035;
+  --naranja-d: #c17d1a;
+  --naranja-s: rgba(244,160,53,0.13);
+  --bg: #F2EFE9;
+  --card: #FFFFFF;
+  --text: #1C1A16;
+  --text2: #6B6560;
+  --text3: #B5B0A8;
+  --border: #E5E0D8;
+  --verde: #1F9E6A;
+  --verde-s: rgba(31,158,106,0.11);
+  --rojo: #D64040;
+  --rojo-s: rgba(214,64,64,0.11);
+  --azul: #2F7FD4;
+  --azul-s: rgba(47,127,212,0.11);
+  --r: 14px;
+  --rs: 9px;
+  --sh: 0 2px 10px rgba(28,26,22,0.07);
+  --sh2: 0 6px 24px rgba(28,26,22,0.11);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;padding-bottom:88px}
+
+/* TOP BAR */
+.topbar{background:var(--text);padding:16px 18px 13px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:9px}
+.logo svg{width:28px;height:28px}
+.logo-txt{font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:-.2px}
+.logo-txt span{color:var(--naranja)}
+.topbar-right{text-align:right}
+.topbar-date{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--text3);line-height:1.3}
+.topbar-user{font-size:.7rem;color:var(--naranja);font-weight:600}
+
+/* NAV */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 9px;gap:4px;border:none;background:none;cursor:pointer;color:var(--text3);transition:color .18s}
+.nav-btn.active{color:var(--naranja)}
+.nav-btn svg{width:22px;height:22px}
+.nav-btn span{font-size:.62rem;font-weight:600;letter-spacing:.3px}
+
+/* PAGES */
+.page{display:none;padding:16px 14px 0;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:.6;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* SECTION TITLE */
+.s-title{font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin:18px 0 10px;padding-left:2px}
+
+/* CARD */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:12px}
+.card-sm{padding:12px 14px}
+
+/* KPI ROW */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.kpi{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px 14px 12px;position:relative;overflow:hidden}
+.kpi-label{font-size:.65rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.kpi-val{font-size:1.18rem;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+.kpi-sub{font-size:.67rem;color:var(--text3);margin-top:3px}
+.kpi-badge{position:absolute;top:11px;right:11px;font-size:.62rem;font-weight:700;padding:3px 7px;border-radius:20px}
+.badge-v{background:var(--verde-s);color:var(--verde)}
+.badge-r{background:var(--rojo-s);color:var(--rojo)}
+.badge-o{background:var(--naranja-s);color:var(--naranja-d)}
+.badge-a{background:var(--azul-s);color:var(--azul)}
+.kpi-stripe{position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 var(--r) var(--r)}
+
+/* PROGRESS BAR */
+.prog-wrap{margin-top:10px}
+.prog-label{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text2);margin-bottom:5px}
+.prog-bar{height:7px;background:var(--border);border-radius:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:10px;transition:width .5s ease}
+
+/* TABLE-STYLE LIST */
+.list-item{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);gap:10px}
+.list-item:last-child{border:none;padding-bottom:0}
+.list-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem}
+.list-main{flex:1;min-width:0}
+.list-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:.68rem;color:var(--text3);margin-top:1px}
+.list-right{text-align:right;flex-shrink:0}
+.list-amt{font-size:.85rem;font-weight:700;font-family:'DM Mono',monospace}
+.list-tag{font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:20px;margin-top:3px;display:inline-block}
+.tag-v{background:var(--verde-s);color:var(--verde)}
+.tag-r{background:var(--rojo-s);color:var(--rojo)}
+.tag-p{background:var(--naranja-s);color:var(--naranja-d)}
+
+/* MONTH TABS */
+.month-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.month-tabs::-webkit-scrollbar{display:none}
+.mtab{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:.72rem;font-weight:600;border:1.5px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;transition:all .16s}
+.mtab.active{background:var(--naranja);border-color:var(--naranja);color:#fff}
+
+/* MODAL / FORM */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(28,26,22,.5);z-index:300;align-items:flex-end}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:22px 18px 32px;width:100%;max-height:88vh;overflow-y:auto}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:var(--border);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.form-group{margin-bottom:13px}
+.form-label{font-size:.72rem;font-weight:600;color:var(--text2);margin-bottom:5px;display:block;letter-spacing:.3px}
+.form-input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--rs);font-family:inherit;font-size:.88rem;color:var(--text);background:var(--bg);transition:border .15s;outline:none}
+.form-input:focus{border-color:var(--naranja)}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6560' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--rs);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--naranja);color:#fff}
+.btn-primary:active{background:var(--naranja-d)}
+.btn-secondary{background:var(--border);color:var(--text2);margin-top:8px}
+
+/* FAB */
+.fab{position:fixed;bottom:76px;right:18px;width:52px;height:52px;border-radius:50%;background:var(--naranja);border:none;box-shadow:0 4px 16px rgba(244,160,53,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:150;transition:transform .15s}
+.fab:active{transform:scale(.94)}
+.fab svg{width:24px;height:24px;stroke:#fff}
+
+/* ALERT */
+.alert{padding:11px 14px;border-radius:var(--rs);font-size:.78rem;font-weight:500;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.alert-r{background:var(--rojo-s);color:var(--rojo)}
+.alert-v{background:var(--verde-s);color:var(--verde)}
+.alert-o{background:var(--naranja-s);color:var(--naranja-d)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:14px 0}
+
+/* CHART MINI */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:60px;margin-top:10px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:height .4s ease}
+.bar-lbl{font-size:.55rem;color:var(--text3);font-weight:600}
+
+/* CHIP */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:4px 10px;border-radius:20px;font-size:.68rem;font-weight:600;background:var(--border);color:var(--text2)}
+
+/* RESUMEN header */
+.res-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.res-mes{font-size:.7rem;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.res-total{font-family:'DM Mono',monospace;font-size:1.45rem;font-weight:700;letter-spacing:-1px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <polygon points="2,26 8,2 10,2 4,26" fill="#F4A035"/>
+      <polygon points="6,26 12,6 14,6 8,26" fill="#F4A035"/>
+      <polygon points="10,26 16,10 18,10 12,26" fill="#F4A035"/>
+      <polygon points="14,26 20,14 22,14 16,26" fill="#F4A035"/>
+      <polygon points="18,26 24,18 26,18 20,26" fill="#F4A035"/>
+    </svg>
+    <span class="logo-txt">ROLLER<span>MAG</span></span>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-user" id="usuario-label">Álvaro</div>
+    <div class="topbar-date" id="fecha-top"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: RESUMEN ═══════════════ -->
+<div class="page active" id="pg-resumen">
+  <p class="s-title">Resumen 2026</p>
+
+  <!-- Alertas -->
+  <div class="alert alert-r" id="alerta-meta" style="display:none">
+    ⚠️ <span id="alerta-meta-txt"></span>
+  </div>
+
+  <!-- KPIs principales -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Ventas mes</div>
+      <div class="kpi-val" id="kpi-ventas">$0</div>
+      <div class="kpi-sub" id="kpi-ventas-sub">—</div>
+      <div class="kpi-stripe" style="background:var(--verde)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Meta mes</div>
+      <div class="kpi-val" id="kpi-meta">$0</div>
+      <div class="kpi-sub" id="kpi-meta-sub">—</div>
+      <div class="kpi-stripe" id="kpi-meta-stripe" style="background:var(--naranja)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Egresos mes</div>
+      <div class="kpi-val" id="kpi-egresos">$0</div>
+      <div class="kpi-sub" id="kpi-egresos-sub">Costos + gastos</div>
+      <div class="kpi-stripe" style="background:var(--rojo)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Resultado</div>
+      <div class="kpi-val" id="kpi-resultado">$0</div>
+      <div class="kpi-sub" id="kpi-resultado-sub">—</div>
+      <div class="kpi-stripe" id="kpi-res-stripe" style="background:var(--azul)"></div>
+    </div>
+  </div>
+
+  <!-- Avance meta -->
+  <div class="card card-sm">
+    <div class="prog-label">
+      <span id="prog-label-l">Avance meta</span>
+      <span id="prog-pct" style="font-weight:700">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%;background:var(--naranja)"></div></div>
+  </div>
+
+  <!-- Mini gráfico ventas -->
+  <div class="card">
+    <div class="res-header">
+      <span class="res-mes">Ventas por mes 2026</span>
+    </div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+
+  <!-- Selector mes -->
+  <div class="month-tabs" id="month-tabs"></div>
+
+  <!-- Clientes del mes -->
+  <div class="card">
+    <div class="res-header">
+      <span class="res-mes" id="clientes-title">Clientes enero</span>
+      <span style="font-size:.7rem;color:var(--text3)" id="clientes-count"></span>
+    </div>
+    <div id="clientes-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: GASTOS ═══════════════ -->
+<div class="page" id="pg-gastos">
+  <p class="s-title">Gastos fijos mensuales</p>
+
+  <div class="alert alert-o">📋 Gastos precargados desde tu Excel. Toca para editar.</div>
+
+  <div class="card" id="gastos-list"></div>
+
+  <p class="s-title">Proveedores pendientes</p>
+  <div class="card" id="proveedores-list"></div>
+</div>
+
+<!-- ═══════════════ PAGE: SUELDOS ═══════════════ -->
+<div class="page" id="pg-sueldos">
+  <p class="s-title">Planilla de sueldos</p>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total líquido</div>
+      <div class="kpi-val">$3.850.000</div>
+      <div class="kpi-sub">5 colaboradores</div>
+      <div class="kpi-stripe" style="background:var(--azul)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Costo empresa</div>
+      <div class="kpi-val">$4.763.083</div>
+      <div class="kpi-sub">Con previsional</div>
+      <div class="kpi-stripe" style="background:var(--naranja)"></div>
+    </div>
+  </div>
+
+  <div class="card" id="sueldos-list"></div>
+
+  <p class="s-title">Descuentos previsionales</p>
+  <div class="card card-sm">
+    <div class="list-item">
+      <div class="list-icon" style="background:var(--azul-s)">🏦</div>
+      <div class="list-main"><div class="list-name">AFP (trabajador)</div><div class="list-sub">Tasa aplicada</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--azul)">11,57%</div></div>
+    </div>
+    <div class="list-item">
+      <div class="list-icon" style="background:var(--verde-s)">🏥</div>
+      <div class="list-main"><div class="list-name">Salud (Fonasa/Isapre)</div><div class="list-sub">Tasa aplicada</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--verde)">7%</div></div>
+    </div>
+    <div class="list-item">
+      <div class="list-icon" style="background:var(--naranja-s)">📋</div>
+      <div class="list-main"><div class="list-name">Seguro cesantía</div><div class="list-sub">Tasa aplicada</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--naranja-d)">0,6%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: AGREGAR ═══════════════ -->
+<div class="page" id="pg-agregar">
+  <p class="s-title">Registro rápido</p>
+
+  <div class="card">
+    <div class="res-header">
+      <span style="font-size:.85rem;font-weight:700">Nueva transacción</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <select class="form-input form-select" id="new-tipo" onchange="toggleTipoFields()">
+        <option value="venta">💰 Venta</option>
+        <option value="egreso">📤 Egreso / Gasto</option>
+        <option value="cobro">⏳ Cobro pendiente (cliente que debe)</option>
+      </select>
+    </div>
+    <div id="campo-cliente" class="form-group">
+      <label class="form-label">Nombre cliente</label>
+      <input class="form-input" type="text" id="new-cliente" placeholder="Ej: María González">
+    </div>
+    <div id="campo-proveedor" class="form-group" style="display:none">
+      <label class="form-label">Proveedor / Concepto</label>
+      <input class="form-input" type="text" id="new-proveedor" placeholder="Ej: Chantilly, Arriendo, Meta Ads…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monto ($)</label>
+      <input class="form-input" type="number" id="new-monto" placeholder="0" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Método de pago</label>
+      <select class="form-input form-select" id="new-metodo">
+        <option>Transferencia</option>
+        <option>Transbank / WebPay</option>
+        <option>Link de pago</option>
+        <option>Efectivo</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mes</label>
+      <select class="form-input form-select" id="new-mes">
+        <option>Enero</option><option>Febrero</option><option selected>Marzo</option>
+        <option>Abril</option><option>Mayo</option><option>Junio</option>
+        <option>Julio</option><option>Agosto</option><option>Septiembre</option>
+        <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+      </select>
+    </div>
+    <div class="form-group" id="campo-estado">
+      <label class="form-label">Estado</label>
+      <select class="form-input form-select" id="new-estado">
+        <option value="Instalado">✅ Instalado / Cobrado</option>
+        <option value="Pendiente">⏳ Pendiente</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nota (opcional)</label>
+      <input class="form-input" type="text" id="new-nota" placeholder="Tipo cortina, observación…">
+    </div>
+    <button class="btn btn-primary" onclick="guardarTransaccion()">Guardar ✓</button>
+  </div>
+
+  <div id="nuevas-trans" style="display:none">
+    <p class="s-title">Transacciones ingresadas hoy</p>
+    <div class="card" id="lista-nuevas"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: PROYECCIÓN ═══════════════ -->
+<div class="page" id="pg-proyeccion">
+  <p class="s-title">Proyección anual 2026</p>
+
+  <div class="alert alert-o">📐 Basado en datos reales Ene–Mar. Ajusta el escenario para ver el impacto.</div>
+
+  <!-- Selector escenario -->
+  <div class="card card-sm" style="margin-bottom:12px">
+    <div class="res-header" style="margin-bottom:10px">
+      <span style="font-size:.85rem;font-weight:700">Escenario</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="mtab active" id="esc-conservador" onclick="setEscenario('conservador')">Conservador</button>
+      <button class="mtab" id="esc-base" onclick="setEscenario('base')">Base</button>
+      <button class="mtab" id="esc-optimista" onclick="setEscenario('optimista')">Optimista</button>
+    </div>
+    <div style="margin-top:10px;font-size:.72rem;color:var(--text2)" id="esc-descripcion">
+      Proyecta los meses restantes con el promedio más bajo de los 3 meses reales.
+    </div>
+  </div>
+
+  <!-- KPIs anuales -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Ventas anuales</div>
+      <div class="kpi-val" id="proy-ventas-año">$0</div>
+      <div class="kpi-sub" id="proy-ventas-sub">—</div>
+      <div class="kpi-stripe" style="background:var(--verde)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Costos anuales</div>
+      <div class="kpi-val" id="proy-costos-año">$0</div>
+      <div class="kpi-sub">Materia prima + gastos</div>
+      <div class="kpi-stripe" style="background:var(--rojo)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Resultado anual</div>
+      <div class="kpi-val" id="proy-resultado-año">$0</div>
+      <div class="kpi-sub" id="proy-resultado-sub">—</div>
+      <div class="kpi-stripe" id="proy-res-stripe" style="background:var(--azul)"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Meta anual</div>
+      <div class="kpi-val" id="proy-meta-año">$0</div>
+      <div class="kpi-sub" id="proy-meta-pct">—</div>
+      <div class="kpi-stripe" style="background:var(--naranja)"></div>
+    </div>
+  </div>
+
+  <!-- Gráfico anual -->
+  <div class="card">
+    <div class="res-header" style="margin-bottom:10px">
+      <span style="font-size:.85rem;font-weight:700">Ventas mes a mes</span>
+      <span style="font-size:.68rem;color:var(--text3)">Real vs Proyectado</span>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:4px;height:80px" id="proy-bar-chart"></div>
+    <div style="display:flex;gap:12px;margin-top:8px">
+      <div style="display:flex;align-items:center;gap:5px;font-size:.65rem;color:var(--text2)">
+        <div style="width:10px;height:10px;border-radius:2px;background:var(--naranja)"></div> Real
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:.65rem;color:var(--text2)">
+        <div style="width:10px;height:10px;border-radius:2px;background:var(--border);border:1.5px dashed var(--text3)"></div> Proyectado
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla mensual -->
+  <div class="card" style="padding:14px">
+    <div class="res-header" style="margin-bottom:10px">
+      <span style="font-size:.85rem;font-weight:700">Detalle mensual</span>
+    </div>
+    <div id="proy-tabla"></div>
+  </div>
+
+  <!-- Simulador -->
+  <p class="s-title">Simulador de crecimiento</p>
+  <div class="card">
+    <div class="form-group">
+      <label class="form-label">¿Cuánto quieres vender al año? ($)</label>
+      <input class="form-input" type="number" id="sim-meta" placeholder="Ej: 200000000" inputmode="numeric" oninput="simular()">
+    </div>
+    <div id="sim-resultado" style="display:none">
+      <div class="divider"></div>
+      <div class="list-item">
+        <div class="list-main"><div class="list-name">Ventas mensuales necesarias</div></div>
+        <div class="list-right"><div class="list-amt" style="color:var(--naranja)" id="sim-mensual">$0</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-main"><div class="list-name">Clientes/mes estimados</div><div class="list-sub">Ticket promedio $646.148</div></div>
+        <div class="list-right"><div class="list-amt" style="color:var(--azul)" id="sim-clientes">0</div></div>
+      </div>
+      <div class="list-item">
+        <div class="list-main"><div class="list-name">Vs promedio real (Ene–Mar)</div></div>
+        <div class="list-right"><div class="list-amt" id="sim-vs">—</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: ANÁLISIS ═══════════════ -->
+<div class="page" id="pg-analisis">
+  <p class="s-title">Análisis financiero</p>
+
+  <div class="alert alert-o">📊 Datos reales Ene–Mar 2026. Promedio de 3 meses.</div>
+
+  <!-- Punto de equilibrio -->
+  <div class="card">
+    <div class="res-header">
+      <span style="font-size:.85rem;font-weight:700">Punto de equilibrio</span>
+    </div>
+    <div id="pe-list"></div>
+    <div class="divider"></div>
+    <div class="prog-label">
+      <span style="font-size:.72rem;color:var(--text2)">¿Cuánto necesitas vender para no perder?</span>
+    </div>
+    <div class="chip-row">
+      <span class="chip">Enero: $27,05M</span>
+      <span class="chip">Febrero: $18,24M</span>
+      <span class="chip">Marzo: $21,22M</span>
+    </div>
+  </div>
+
+  <!-- Margen de contribución -->
+  <div class="card">
+    <div class="res-header">
+      <span style="font-size:.85rem;font-weight:700">Margen de contribución</span>
+    </div>
+    <div id="margen-list"></div>
+  </div>
+
+  <!-- Costos fijos promedio -->
+  <div class="card">
+    <div class="res-header">
+      <span style="font-size:.85rem;font-weight:700">Costos fijos promedio / mes</span>
+    </div>
+    <div id="costos-fijos-list"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="navTo('pg-resumen',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Resumen</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('pg-gastos',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    <span>Gastos</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('pg-sueldos',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Sueldos</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('pg-agregar',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>Agregar</span>
+  </button>
+  <button class="nav-btn" onclick="navTo('pg-analisis',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Análisis</span>
+  </button>
+</nav>
+
+<script>
+// ──────────────────────────────────────────────────────────
+// DATOS REALES DEL EXCEL
+// ──────────────────────────────────────────────────────────
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+const DATA_MESES = {
+  Enero:    { ventas: 15149382, meta: 20000000, clientes: 28, instalados: 28, ticket: 541049 },
+  Febrero:  { ventas: 18738305, meta: 20000000, clientes: 29, instalados: 14, ticket: 646148 },
+  Marzo:    { ventas: 17864063, meta: 22000000, clientes: 23, instalados: 8,  ticket: 1984896 },
+  Abril:    { ventas: 3596835,  meta: 23000000, clientes: 7,  instalados: 2,  ticket: 513834 },
+};
+
+const CLIENTES = {
+  Enero: [
+    {n:'Luis Salinas',       c:'Ñuñoa',        tipo:'Roller',          total:76569,    estado:'Instalado'},
+    {n:'Karla Sobarzo',      c:'Macul',         tipo:'Doble',           total:108955,   estado:'Instalado'},
+    {n:'Maria Jose Sotomayor',c:'Peñalolen',   tipo:'Roller',          total:298653,   estado:'Instalado'},
+    {n:'Marysol Alvear',     c:'Ñuñoa',        tipo:'Roller',          total:312824,   estado:'Instalado'},
+    {n:'Ariel Olavarria',    c:'Providencia',   tipo:'Roller',          total:672133,   estado:'Instalado'},
+    {n:'Tomas Videla',       c:'Las Condes',    tipo:'Roller',          total:385919,   estado:'Instalado'},
+    {n:'Daniela Torres',     c:'Las Condes',    tipo:'Dúo',             total:313916,   estado:'Instalado'},
+    {n:'Gabriela Berrios',   c:'Providencia',   tipo:'Vertical',        total:540227,   estado:'Instalado'},
+    {n:'Cristina Peralta',   c:'Providencia',   tipo:'Doble',           total:1069578,  estado:'Instalado'},
+    {n:'Loreto Caro',        c:'Colina',        tipo:'Roller',          total:327981,   estado:'Instalado'},
+    {n:'Eduardo',            c:'Las Condes',    tipo:'Doble/Roller',    total:1481366,  estado:'Instalado'},
+    {n:'Romina Carozzi',     c:'Santiago',      tipo:'Roller',          total:495981,   estado:'Instalado'},
+    {n:'Nicolas Araya',      c:'Ñuñoa',        tipo:'Doble/Roller',    total:877198,   estado:'Instalado'},
+    {n:'Carlos Cofre',       c:'Stgo. Centro',  tipo:'Roller',          total:1056791,  estado:'Instalado'},
+    {n:'Camilo Arriagada',   c:'Vitacura',      tipo:'Roller',          total:2307743,  estado:'Instalado'},
+  ],
+  Febrero: [
+    {n:'Rocio Soto',         c:'Macul',         tipo:'Doble/Roller',    total:793064,   estado:'Instalado'},
+    {n:'Nicole Vivian',      c:'San Miguel',    tipo:'Roller',          total:1680980,  estado:'Instalado'},
+    {n:'Eduardo Gallegillos',c:'Las Condes',    tipo:'Doble/Roller',    total:1998954,  estado:'Instalado'},
+    {n:'Gabriela Salazar',   c:'Cerrillos',     tipo:'Roller',          total:935716,   estado:'Instalado'},
+    {n:'Leonardo Arraño',    c:'Providencia',   tipo:'Varios',          total:1501016,  estado:'Pendiente'},
+    {n:'Victor Bello',       c:'Vitacura',      tipo:'Varios',          total:1318637,  estado:'Pendiente'},
+    {n:'Matias Rodriguez',   c:'Colina',        tipo:'Varios',          total:1559938,  estado:'Pendiente'},
+    {n:'Andrea Vilugron',    c:'Providencia',   tipo:'Varios',          total:1313665,  estado:'Pendiente'},
+    {n:'Benjamin Allende',   c:'Ñuñoa',        tipo:'Varios',          total:760875,   estado:'Pendiente'},
+  ],
+  Marzo: [
+    {n:'David Pizarro',      c:'Chicureo',      tipo:'Varios (28u)',    total:5026647,  estado:'Instalado'},
+    {n:'Edgardo',            c:'Ñuñoa',        tipo:'Varios (13u)',    total:2677045,  estado:'Instalado'},
+    {n:'Francisco Fullenkamp',c:'Stgo. Centro', tipo:'Varios (7u)',     total:952394,   estado:'Instalado'},
+    {n:'Maritza Olave',      c:'San Ramón',     tipo:'Varios (3u)',     total:597526,   estado:'Instalado'},
+    {n:'Agustin Gajardo',    c:'Pto. Montt',    tipo:'Varios (8u)',     total:1052280,  estado:'Instalado'},
+    {n:'Ignacio Barrera',    c:'San Joaquín',   tipo:'Varios (7u)',     total:1067948,  estado:'Pendiente'},
+    {n:'Francisco Javier',   c:'Padre Hurtado', tipo:'Varios (10u)',    total:1855139,  estado:'Pendiente'},
+    {n:'Christian Valdes',   c:'La Reina',      tipo:'Varios (4u)',     total:342715,   estado:'Pendiente'},
+  ],
+  Abril: [
+    {n:'Eliset Lobos',       c:'Maipú',         tipo:'Varios (5u)',     total:666614,   estado:'Instalado'},
+    {n:'Trinidad',           c:'Las Condes',    tipo:'Varios (1u)',     total:179456,   estado:'Instalado'},
+    {n:'Hannan Hananias',    c:'Providencia',   tipo:'Varios (1u)',     total:365388,   estado:'Pendiente'},
+    {n:'Ivonne Segovia',     c:'Conchalí',      tipo:'Varios (3u)',     total:201769,   estado:'Pendiente'},
+    {n:'Maritza Andrade',    c:'San Joaquín',   tipo:'Varios (3u)',     total:644575,   estado:'Pendiente'},
+    {n:'Javiera Acevedo',    c:'Viña del Mar',  tipo:'Varios (3u)',     total:637382,   estado:'Pendiente'},
+    {n:'Jorge Tamayo',       c:'Calama',        tipo:'Varios (5u)',     total:901650,   estado:'Pendiente'},
+  ],
+};
+
+const GASTOS_FIJOS = [
+  {cat:'🏠 Arriendo',      monto:1148440, tipo:'fijo'},
+  {cat:'💡 Electricidad',  monto:102196,  tipo:'fijo'},
+  {cat:'💧 Agua',          monto:980,     tipo:'fijo'},
+  {cat:'📞 Internet/Tel',  monto:90253,   tipo:'fijo'},
+  {cat:'📊 Contadora',     monto:104000,  tipo:'fijo'},
+  {cat:'⛽ Petróleo',      monto:263324,  tipo:'variable'},
+  {cat:'📢 Community Mgr', monto:390000,  tipo:'fijo'},
+  {cat:'🌐 Plataforma web',monto:120000,  tipo:'fijo'},
+  {cat:'📣 Publicidad Meta',monto:1923216,tipo:'variable'},
+  {cat:'🏦 Préstamo Roller',monto:728563, tipo:'fijo'},
+  {cat:'🚗 Préstamo Auto', monto:402616,  tipo:'fijo'},
+  {cat:'💳 Tarjeta crédito',monto:1820000,tipo:'variable'},
+];
+
+const PROVEEDORES_PEND = [
+  {n:'Croes Cortinas',   cat:'Materia Prima', monto:354382,  estado:'Pendiente'},
+  {n:'Croes Cortinas',   cat:'Materia Prima', monto:368186,  estado:'Pendiente'},
+  {n:'Croes Cortinas',   cat:'Materia Prima', monto:296239,  estado:'Pendiente'},
+  {n:'Chantilly',        cat:'Materia Prima', monto:192851,  estado:'Pendiente'},
+  {n:'Chantilly',        cat:'Materia Prima', monto:190648,  estado:'Pendiente'},
+  {n:'Igemi',            cat:'Materia Prima', monto:420070,  estado:'Pendiente'},
+  {n:'Arriendo',         cat:'Servicios',     monto:1148440, estado:'Pendiente'},
+  {n:'Préstamo Roller',  cat:'Deuda',         monto:728149,  estado:'Pendiente'},
+  {n:'Préstamo Auto',    cat:'Deuda',         monto:403513,  estado:'Pendiente'},
+];
+
+const SUELDOS = [
+  {n:'Álvaro Mora',       cargo:'Gerente General',        liq:950000,  bruto:1175306},
+  {n:'Magdalena Lezana',  cargo:'Jefa de Ventas',          liq:850000,  bruto:1051590},
+  {n:'Ruben Hermoso',     cargo:'Maestro Confeccionador',  liq:750000,  bruto:927873},
+  {n:'Nicolas Valdebenito',cargo:'Ayudante Instalador',   liq:700000,  bruto:866015},
+  {n:'Joxy Martinez',     cargo:'Ejecutiva de Ventas',     liq:600000,  bruto:742299},
+];
+
+const ANALISIS = {
+  pe_iva:  {Enero:27052969, Febrero:18238102, Marzo:21220093},
+  margen:  {Enero:42.6,     Febrero:54.6,     Marzo:64.3},
+  resultado:{Enero:-4264585,Febrero:229680,   Marzo:-1813390},
+};
+
+// ──────────────────────────────────────────────────────────
+// TRANSACCIONES LOCALES (guardadas en memoria)
+// ──────────────────────────────────────────────────────────
+let transacciones = [];
+
+// ──────────────────────────────────────────────────────────
+// UTILIDADES
+// ──────────────────────────────────────────────────────────
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+const fmtM = n => {
+  if(Math.abs(n)>=1000000) return (n/1000000).toFixed(1).replace('.',',')+'M';
+  if(Math.abs(n)>=1000) return Math.round(n/1000)+'K';
+  return Math.round(n).toString();
+};
+
+let mesActivo = 'Marzo';
+
+// ──────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  document.getElementById('fecha-top').textContent =
+    now.toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'});
+
+  renderMonthTabs();
+  renderResumen();
+  renderGastos();
+  renderSueldos();
+  renderAnalisis();
+});
+
+// ──────────────────────────────────────────────────────────
+// NAV
+// ──────────────────────────────────────────────────────────
+function navTo(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ──────────────────────────────────────────────────────────
+// MONTH TABS
+// ──────────────────────────────────────────────────────────
+function renderMonthTabs() {
+  const cont = document.getElementById('month-tabs');
+  cont.innerHTML = '';
+  Object.keys(DATA_MESES).forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'mtab' + (m === mesActivo ? ' active' : '');
+    btn.textContent = m;
+    btn.onclick = () => { mesActivo = m; renderMonthTabs(); renderResumen(); };
+    cont.appendChild(btn);
+  });
+}
+
+// ──────────────────────────────────────────────────────────
+// RESUMEN
+// ──────────────────────────────────────────────────────────
+function renderResumen() {
+  const d = DATA_MESES[mesActivo] || {};
+  const ventas = d.ventas || 0;
+  const meta   = d.meta   || 0;
+  const pct    = meta ? Math.round(ventas/meta*100) : 0;
+
+  // Calcular egresos del mes (costos materia prima + gastos fijos variables)
+  const costoMP = {Enero:6575365,Febrero:6211128,Marzo:5020712,Abril:0};
+  const gastosFijosTotal = GASTOS_FIJOS.filter(g=>g.tipo==='fijo').reduce((a,g)=>a+g.monto,0);
+  const egresos = (costoMP[mesActivo]||0) + gastosFijosTotal;
+  const resultado = ventas - egresos;
+
+  document.getElementById('kpi-ventas').textContent = fmt(ventas);
+  document.getElementById('kpi-ventas-sub').textContent = `${d.clientes||0} clientes · ${d.instalados||0} instalados`;
+  document.getElementById('kpi-meta').textContent = fmt(meta);
+  document.getElementById('kpi-meta-sub').textContent = `${pct}% completado`;
+  document.getElementById('kpi-egresos').textContent = fmt(egresos);
+  document.getElementById('kpi-resultado').textContent = fmt(resultado);
+  document.getElementById('kpi-resultado-sub').textContent = resultado >= 0 ? '✅ Utilidad' : '❌ Pérdida';
+  document.getElementById('kpi-res-stripe').style.background = resultado >= 0 ? 'var(--verde)' : 'var(--rojo)';
+
+  // Progreso meta
+  document.getElementById('prog-pct').textContent = pct+'%';
+  const fill = document.getElementById('prog-fill');
+  fill.style.width = Math.min(pct,100)+'%';
+  fill.style.background = pct >= 90 ? 'var(--verde)' : pct >= 60 ? 'var(--naranja)' : 'var(--rojo)';
+
+  // Alerta meta
+  const alerta = document.getElementById('alerta-meta');
+  const alertaTxt = document.getElementById('alerta-meta-txt');
+  if(pct < 60) {
+    alerta.style.display = 'flex';
+    alertaTxt.textContent = `Vas en ${pct}% de la meta. Faltan ${fmt(meta-ventas)} para llegar.`;
+  } else { alerta.style.display = 'none'; }
+
+  // Gráfico de barras
+  const chartEl = document.getElementById('bar-chart');
+  chartEl.innerHTML = '';
+  const maxV = Math.max(...Object.values(DATA_MESES).map(x=>x.ventas));
+  Object.entries(DATA_MESES).forEach(([mes,data])=>{
+    const pctBar = maxV ? (data.ventas/maxV)*100 : 0;
+    const isActive = mes === mesActivo;
+    chartEl.innerHTML += `
+      <div class="bar-wrap" onclick="mesActivo='${mes}';renderMonthTabs();renderResumen()">
+        <div class="bar" style="height:${pctBar}%;background:${isActive?'var(--naranja)':'var(--border)'};cursor:pointer"></div>
+        <span class="bar-lbl">${mes.slice(0,3)}</span>
+      </div>`;
+  });
+
+  // Clientes
+  const cList = document.getElementById('clientes-list');
+  const clientes = (CLIENTES[mesActivo]||[]).slice(0,12);
+  document.getElementById('clientes-title').textContent = `Clientes ${mesActivo.toLowerCase()}`;
+  document.getElementById('clientes-count').textContent = `${clientes.length} mostrados`;
+
+  cList.innerHTML = clientes.map(cl => `
+    <div class="list-item">
+      <div class="list-icon" style="background:${cl.estado==='Instalado'?'var(--verde-s)':'var(--naranja-s)'}">
+        ${cl.estado==='Instalado'?'✅':'⏳'}
+      </div>
+      <div class="list-main">
+        <div class="list-name">${cl.n}</div>
+        <div class="list-sub">${cl.c} · ${cl.tipo}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amt">${fmt(cl.total)}</div>
+        <span class="list-tag ${cl.estado==='Instalado'?'tag-v':'tag-p'}">${cl.estado}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ──────────────────────────────────────────────────────────
+// GASTOS
+// ──────────────────────────────────────────────────────────
+function renderGastos() {
+  const cont = document.getElementById('gastos-list');
+  const total = GASTOS_FIJOS.reduce((a,g)=>a+g.monto,0);
+  cont.innerHTML = `
+    <div class="res-header" style="margin-bottom:12px">
+      <span style="font-size:.82rem;font-weight:700">Total mes estimado</span>
+      <span style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--rojo)">${fmt(total)}</span>
+    </div>` +
+    GASTOS_FIJOS.map(g=>`
+    <div class="list-item">
+      <div class="list-main">
+        <div class="list-name">${g.cat}</div>
+        <div class="list-sub">${g.tipo==='fijo'?'Fijo mensual':'Variable'}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amt" style="color:var(--rojo)">${fmt(g.monto)}</div>
+        <span class="list-tag ${g.tipo==='fijo'?'tag-a':'tag-p'}">${g.tipo==='fijo'?'Fijo':'Variable'}</span>
+      </div>
+    </div>`).join('');
+
+  const prov = document.getElementById('proveedores-list');
+  const totalPend = PROVEEDORES_PEND.reduce((a,p)=>a+p.monto,0);
+  prov.innerHTML = `
+    <div class="res-header" style="margin-bottom:12px">
+      <span style="font-size:.82rem;font-weight:700">Total pendiente pago</span>
+      <span style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--rojo)">${fmt(totalPend)}</span>
+    </div>` +
+    PROVEEDORES_PEND.map(p=>`
+    <div class="list-item">
+      <div class="list-icon" style="background:var(--rojo-s)">📦</div>
+      <div class="list-main">
+        <div class="list-name">${p.n}</div>
+        <div class="list-sub">${p.cat}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amt" style="color:var(--rojo)">${fmt(p.monto)}</div>
+        <span class="list-tag tag-r">Pendiente</span>
+      </div>
+    </div>`).join('');
+}
+
+// ──────────────────────────────────────────────────────────
+// SUELDOS
+// ──────────────────────────────────────────────────────────
+function renderSueldos() {
+  const cont = document.getElementById('sueldos-list');
+  cont.innerHTML = SUELDOS.map(s=>`
+    <div class="list-item">
+      <div class="list-icon" style="background:var(--azul-s)">👤</div>
+      <div class="list-main">
+        <div class="list-name">${s.n}</div>
+        <div class="list-sub">${s.cargo}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amt" style="color:var(--azul)">${fmt(s.liq)}</div>
+        <div class="list-sub" style="font-size:.62rem">Bruto: ${fmt(s.bruto)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ──────────────────────────────────────────────────────────
+// ANÁLISIS
+// ──────────────────────────────────────────────────────────
+function renderAnalisis() {
+  // PE
+  document.getElementById('pe-list').innerHTML = `
+    <div class="list-item">
+      <div class="list-main"><div class="list-name">Promedio punto equilibrio</div><div class="list-sub">Ventas mín. para no perder (con IVA)</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--rojo)">$22,17M</div></div>
+    </div>
+    <div class="list-item">
+      <div class="list-main"><div class="list-name">Mejor mes (Febrero)</div><div class="list-sub">PE más bajo → menos presión</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--verde)">$18,24M</div></div>
+    </div>`;
+
+  // Margen
+  document.getElementById('margen-list').innerHTML = ['Enero','Febrero','Marzo'].map(m=>`
+    <div class="list-item">
+      <div class="list-main">
+        <div class="list-name">${m} 2026</div>
+        <div class="prog-bar" style="margin-top:5px"><div class="prog-fill" style="width:${ANALISIS.margen[m]}%;background:${ANALISIS.margen[m]>55?'var(--verde)':'var(--naranja)'}"></div></div>
+      </div>
+      <div class="list-right" style="padding-left:10px">
+        <div class="list-amt" style="color:${ANALISIS.margen[m]>55?'var(--verde)':'var(--naranja)'}">${ANALISIS.margen[m]}%</div>
+        <div class="list-sub">${ANALISIS.resultado[m]>=0?'✅ Utilidad':'❌ Pérdida'}</div>
+      </div>
+    </div>`).join('');
+
+  // Costos fijos promedio
+  const costosFijosData = [
+    {n:'Sueldos y remuneraciones', prom:4205867},
+    {n:'Servicios básicos',        prom:1703393},
+    {n:'Marketing y ventas',       prom:2080713},
+    {n:'Deudas y préstamos',       prom:1854186},
+  ];
+  document.getElementById('costos-fijos-list').innerHTML =
+    costosFijosData.map(c=>`
+    <div class="list-item">
+      <div class="list-main"><div class="list-name">${c.n}</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--rojo)">${fmt(c.prom)}</div></div>
+    </div>`).join('') +
+    `<div class="divider"></div>
+    <div class="list-item">
+      <div class="list-main"><div class="list-name" style="font-weight:700">TOTAL COSTOS FIJOS</div></div>
+      <div class="list-right"><div class="list-amt" style="color:var(--rojo);font-size:1rem">${fmt(9844159)}</div></div>
+    </div>`;
+}
+
+// ──────────────────────────────────────────────────────────
+// AGREGAR TRANSACCIÓN
+// ──────────────────────────────────────────────────────────
+function toggleTipoFields() {
+  const tipo = document.getElementById('new-tipo').value;
+  document.getElementById('campo-cliente').style.display   = tipo!=='egreso' ? 'block' : 'none';
+  document.getElementById('campo-proveedor').style.display = tipo==='egreso'  ? 'block' : 'none';
+  document.getElementById('campo-estado').style.display    = tipo!=='egreso'  ? 'block' : 'none';
+}
+
+function guardarTransaccion() {
+  const tipo   = document.getElementById('new-tipo').value;
+  const monto  = parseFloat(document.getElementById('new-monto').value)||0;
+  const metodo = document.getElementById('new-metodo').value;
+  const mes    = document.getElementById('new-mes').value;
+  const nota   = document.getElementById('new-nota').value;
+  const estado = document.getElementById('new-estado').value;
+  const nombre = tipo==='egreso'
+    ? document.getElementById('new-proveedor').value
+    : document.getElementById('new-cliente').value;
+
+  if(!nombre || !monto) { alert('Completa nombre y monto.'); return; }
+
+  transacciones.unshift({ tipo, nombre, monto, metodo, mes, nota, estado, ts: new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}) });
+
+  // Limpiar
+  ['new-cliente','new-proveedor','new-monto','new-nota'].forEach(id=>document.getElementById(id).value='');
+
+  renderNuevas();
+  alert(`✅ ${tipo==='egreso'?'Egreso':'Venta'} registrado: ${fmt(monto)}`);
+}
+
+function renderNuevas() {
+  if(!transacciones.length) return;
+  document.getElementById('nuevas-trans').style.display = 'block';
+  document.getElementById('lista-nuevas').innerHTML = transacciones.slice(0,10).map(t=>`
+    <div class="list-item">
+      <div class="list-icon" style="background:${t.tipo==='egreso'?'var(--rojo-s)':'var(--verde-s)'}">
+        ${t.tipo==='egreso'?'📤':'💰'}
+      </div>
+      <div class="list-main">
+        <div class="list-name">${t.nombre}</div>
+        <div class="list-sub">${t.mes} · ${t.metodo} · ${t.ts}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amt" style="color:${t.tipo==='egreso'?'var(--rojo)':'var(--verde)'}">${t.tipo==='egreso'?'-':'+'} ${fmt(t.monto)}</div>
+        ${t.nota?`<div class="list-sub">${t.nota}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
